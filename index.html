@@ -260,15 +260,30 @@ function playGame(i){
 
   // fake "game screen"
   setTimeout(()=>{
-    overlay.innerHTML = `
-      <div style="text-align:center">
-        <h2>${game.name}</h2>
-        <p>Game is running 🎮</p>
-        <button onclick="location.reload()" style="padding:10px 16px;font-size:16px;">
-          Back to Dashboard
-        </button>
-      </div>
-    `;
+    let score = 0;
+
+overlay.innerHTML = `
+  <div style="text-align:center">
+    <h2>${game.name}</h2>
+    <p>Tap the button to score</p>
+    <h3 id="score">Score: 0</h3>
+
+    <button id="tapBtn" style="padding:16px 24px;font-size:18px;margin:10px;">
+      TAP 🎯
+    </button>
+
+    <br>
+
+    <button onclick="location.reload()" style="padding:10px 16px;font-size:16px;">
+      Back to Dashboard
+    </button>
+  </div>
+`;
+
+document.getElementById("tapBtn").onclick = () => {
+  score++;
+  document.getElementById("score").innerText = "Score: " + score;
+};
   }, 3600);
 }
 start();
