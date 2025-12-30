@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fake Creator Dashboard (Safe)</title>
+<style>
+body{margin:0;font-family:Arial;background:#171717;color:#fff}
+.hidden{display:none}
+button{padding:10px;background:#2bb1ff;border:none;border-radius:6px}
+header{background:#121212;padding:12px}
+.card{background:#2a2a2a;margin:10px;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h2>Login</h2>
+  <input id="user" placeholder="Username">
+  <button id="loginBtn">Login</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <strong>Creator Dashboard</strong>
+    <button id="newBtn">+ New</button>
+  </header>
+  <div id="list"></div>
+</div>
+
+<script>
+const loginDiv=document.getElementById("login");
+const appDiv=document.getElementById("app");
+const loginBtn=document.getElementById("loginBtn");
+const list=document.getElementById("list");
+const newBtn=document.getElementById("newBtn");
+
+const KEY="SAFE_DASH";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"user":null,"items":[]}')
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+
+loginBtn.addEventListener("click",()=>{
+  const u=document.getElementById("user").value.trim();
+  if(!u){alert("Type a username");return;}
+  data.user=u;
+  save();
+  start();
+});
+
+newBtn.addEventListener("click",()=>{
+  const name=prompt("Experience name");
+  if(!name) return;
+  data.items.push(name);
+  save();
+  render();
+});
+
+function start(){
+  if(!data.user) return;
+  loginDiv.classList.add("hidden");
+  appDiv.classList.remove("hidden");
+  render();
+}
+
+function render(){
+  list.innerHTML="";
+  data.items.forEach((i,idx)=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.textContent=i;
+    list.appendChild(d);
+  });
+}
+
+start();
+</script>
+
+</body>
+</html>
