@@ -3,75 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fake Creator Dashboard (Safe)</title>
+<title>Creator Dashboard</title>
+
 <style>
-body{margin:0;font-family:Arial;background:#171717;color:#fff}
-.hidden{display:none}
-button{padding:10px;background:#2bb1ff;border:none;border-radius:6px}
-header{background:#121212;padding:12px}
-.card{background:#2a2a2a;margin:10px;padding:10px;border-radius:6px}
+:root {
+  --bg:#121212;
+  --panel:#1e1e1e;
+  --card:#2a2a2a;
+  --accent:#2bb1ff;
+  --text:#fff;
+  --muted:#aaa;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial;
+}
+
+header {
+  background:#0f0f0f;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #222;
+}
+
+header h1 {
+  font-size:16px;
+  margin:0;
+}
+
+header button {
+  background:var(--accent);
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  font-weight:600;
+}
+
+main {
+  padding:14px;
+}
+
+.stats {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.stat {
+  background:var(--panel);
+  padding:10px;
+  border-radius:8px;
+  text-align:center;
+}
+
+.stat div:first-child {
+  font-size:12px;
+  color:var(--muted);
+}
+
+.stat div:last-child {
+  font-size:16px;
+  font-weight:700;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:12px;
+}
+
+.card {
+  background:var(--card);
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.thumb {
+  height:90px;
+  background:linear-gradient(135deg,#444,#222);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+}
+
+.card-body {
+  padding:8px;
+}
+
+.card-body strong {
+  display:block;
+  margin-bottom:4px;
+}
+
+.card-body small {
+  color:var(--muted);
+}
+
+.card-body button {
+  margin-top:6px;
+  width:100%;
+  background:#ff4d4d;
+  border:none;
+  padding:6px;
+  border-radius:6px;
+  font-size:12px;
+}
+
+.login {
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+.login input {
+  padding:10px;
+  width:70%;
+  margin-bottom:10px;
+}
+
+.hidden { display:none; }
 </style>
 </head>
+
 <body>
 
-<div id="login">
-  <h2>Login</h2>
-  <input id="user" placeholder="Username">
-  <button id="loginBtn">Login</button>
+<div id="login" class="login">
+  <h2>Creator Login</h2>
+  <input id="username" placeholder="Username">
+  <button onclick="login()">Login</button>
 </div>
 
 <div id="app" class="hidden">
-  <header>
-    <strong>Creator Dashboard</strong>
-    <button id="newBtn">+ New</button>
-  </header>
-  <div id="list"></div>
+<header>
+  <h1 id="title">Creator Dashboard</h1>
+  <button onclick="addGame()">+ New</button>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div>Visits</div><div id="visits">0</div></div>
+    <div class="stat"><div>Players</div><div id="players">0</div></div>
+    <div class="stat"><div>Revenue</div><div id="robux">0</div></div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+</main>
 </div>
 
 <script>
-const loginDiv=document.getElementById("login");
-const appDiv=document.getElementById("app");
-const loginBtn=document.getElementById("loginBtn");
-const list=document.getElementById("list");
-const newBtn=document.getElementById("newBtn");
+const KEY="RBX_DASH";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"user":null,"games":[]}');
 
-const KEY="SAFE_DASH";
-let data=JSON.parse(localStorage.getItem(KEY)||'{"user":null,"items":[]}')
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
 
-function save(){localStorage.setItem(KEY,JSON.stringify(data))}
-
-loginBtn.addEventListener("click",()=>{
-  const u=document.getElementById("user").value.trim();
-  if(!u){alert("Type a username");return;}
+function login(){
+  const u=document.getElementById("username").value.trim();
+  if(!u) return alert("Enter username");
   data.user=u;
   save();
   start();
-});
-
-newBtn.addEventListener("click",()=>{
-  const name=prompt("Experience name");
-  if(!name) return;
-  data.items.push(name);
-  save();
-  render();
-});
+}
 
 function start(){
   if(!data.user) return;
-  loginDiv.classList.add("hidden");
-  appDiv.classList.remove("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("title").textContent=`${data.user}'s Dashboard`;
+  render();
+}
+
+function addGame(){
+  const name=prompt("Experience name");
+  if(!name) return;
+  data.games.push({
+    name,
+    visits:rand(100,5000),
+    players:rand(5,300),
+    robux:rand(10,900)
+  });
+  save();
+  render();
+}
+
+function removeGame(i){
+  data.games.splice(i,1);
+  save();
   render();
 }
 
 function render(){
-  list.innerHTML="";
-  data.items.forEach((i,idx)=>{
-    const d=document.createElement("div");
-    d.className="card";
-    d.textContent=i;
-    list.appendChild(d);
+  const g=document.getElementById("grid");
+  g.innerHTML="";
+  let v=0,p=0,r=0;
+
+  data.games.forEach((x,i)=>{
+    v+=x.visits; p+=x.players; r+=x.robux;
+
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <div class="thumb">${x.name[0]}</div>
+      <div class="card-body">
+        <strong>${x.name}</strong>
+        <small>${x.visits} visits · ${x.players} players</small>
+        <button onclick="removeGame(${i})">Delete</button>
+      </div>`;
+    g.appendChild(c);
   });
+
+  visits.textContent=v;
+  players.textContent=p;
+  robux.textContent=r;
 }
+
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
 start();
 </script>
