@@ -300,10 +300,1138 @@ if ("serviceWorker" in navigator) {
 </body>
   <!-- existing stuff -->
 
-<script>
-/* FPS GAME CODE GOES HERE */
-</script>
 
+  
+<script>
+let chance = Math.random();
+
+if (chance < 0.6) {
+  console.log("FPS game loaded");
+} else {
+  console.log("Normal game loaded");
+}
+</script>
+<!-- FPS / RPG chance system (ADDED, not replacing) -->
+<script>
+  const chance = Math.random();
+
+  if (chance < 0.6) {
+    console.log("FPS / RPG mode selected");
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      "<div style='position:fixed;bottom:10px;right:10px;background:#111;color:#0f0;padding:8px;border-radius:6px;font-family:monospace'>FPS MODE</div>"
+    );
+  } else {
+    console.log("Normal game mode selected");
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      "<div style='position:fixed;bottom:10px;right:10px;background:#111;color:#0af;padding:8px;border-radius:6px;font-family:monospace'>NORMAL MODE</div>"
+    );
+  }
+</script>
+<!-- FPS CAMERA + GUN SYSTEM -->
+<style>
+#fps {
+  position: fixed;
+  inset: 0;
+  background: #111;
+  cursor: crosshair;
+  touch-action: none;
+}
+#crosshair {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+  pointer-events: none;
+}
+#crosshair::before,
+#crosshair::after {
+  content: "";
+  position: absolute;
+  background: white;
+}
+#crosshair::before {
+  width: 2px; height: 20px; left: 9px; top: 0;
+}
+#crosshair::after {
+  height: 2px; width: 20px; top: 9px; left: 0;
+}
+#hud {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  color: white;
+  font-family: monospace;
+}
+</style>
+
+<div id="fps"></div>
+<div id="crosshair"></div>
+<div id="hud"></div>
+
+<script>
+/* ===== BASIC FPS + GUNS ===== */
+
+const guns = {
+  pistol: { damage: 25, rate: 500, ammo: 12 },
+  smg: { damage: 10, rate: 100, ammo: 30 },
+  shotgun: { damage: 50, rate: 800, ammo: 6 }
+};
+
+let currentGun = "pistol";
+let lastShot = 0;
+
+const hud = document.getElementById("hud");
+const fps = document.getElementById("fps");
+
+function updateHUD() {
+  hud.textContent =
+    "Gun: " + currentGun.toUpperCase() +
+    " | Ammo: " + guns[currentGun].ammo;
+}
+
+updateHUD();
+
+/* SHOOT */
+function shoot() {
+  const gun = guns[currentGun];
+  const now = Date.now();
+  if (now - lastShot < gun.rate) return;
+  if (gun.ammo <= 0) return;
+
+  gun.ammo--;
+  lastShot = now;
+
+  console.log("Shot fired:", currentGun);
+  updateHUD();
+}
+
+/* MOUSE / TOUCH FIRE */
+fps.addEventListener("click", shoot);
+fps.addEventListener("touchstart", shoot);
+
+/* SWITCH GUNS */
+document.addEventListener("keydown", e => {
+  if (e.key === "1") currentGun = "pistol";
+  if (e.key === "2") currentGun = "smg";
+  if (e.key === "3") currentGun = "shotgun";
+  updateHUD();
+});
+
+/* SIMPLE FPS LOOK (visual only) */
+let lookX = 0, lookY = 0;
+
+document.addEventListener("mousemove", e => {
+  lookX += e.movementX * 0.1;
+  lookY += e.movementY * 0.1;
+  fps.style.background =
+    `radial-gradient(circle at ${50 + lookX/10}% ${50 + lookY/10}%, #222, #000)`;
+});
+</script>
+<!-- MOBILE CONTROLS + PISTOL SLIDE -->
+<style>
+#mobileControls{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  font-family:system-ui, -apple-system, sans-serif;
+}
+#shootBtn{
+  position:absolute;
+  right:20px;
+  bottom:40px;
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  background:#ff3b3b;
+  color:#fff;
+  font-size:18px;
+  border:none;
+  pointer-events:auto;
+}
+#gunBtns{
+  position:absolute;
+  left:20px;
+  bottom:40px;
+  display:flex;
+  gap:8px;
+  pointer-events:auto;
+}
+#gunBtns button{
+  padding:10px 12px;
+  background:#222;
+  color:#fff;
+  border:1px solid #555;
+  border-radius:6px;
+  font-size:14px;
+}
+#gunModel{
+  position:fixed;
+  bottom:10px;
+  left:50%;
+  width:160px;
+  height:90px;
+  margin-left:-80px;
+  background:#111;
+  border-radius:8px;
+  transform-origin:center;
+  pointer-events:none;
+}
+#slide{
+  position:absolute;
+  top:8px;
+  left:10px;
+  width:140px;
+  height:24px;
+  background:#333;
+  border-radius:4px;
+  transition:transform 0.06s linear;
+}
+</style>
+
+<div id="mobileControls">
+  <div id="gunBtns">
+    <button onclick="setGun('pistol')">Pistol</button>
+    <button onclick="setGun('smg')">SMG</button>
+    <button onclick="setGun('shotgun')">Shotgun</button>
+  </div>
+  <button id="shootBtn">SHOOT</button>
+</div>
+
+<!-- simple gun visual -->
+<div id="gunModel">
+  <div id="slide"></div>
+</div>
+
+<script>
+/* ===== MOBILE CONTROLS + SLIDE ===== */
+const shootBtn = document.getElementById("shootBtn");
+const slide = document.getElementById("slide");
+
+/* connect to your existing guns object */
+function setGun(name){
+  if (typeof guns !== "undefined" && guns[name]) {
+    currentGun = name;
+    updateHUD && updateHUD();
+  }
+}
+
+/* mobile shoot */
+shootBtn.addEventListener("touchstart", e=>{
+  e.preventDefault();
+  fireWithAnimation();
+});
+shootBtn.addEventListener("click", fireWithAnimation);
+
+function fireWithAnimation(){
+  if (typeof shoot === "function") shoot();
+
+  /* pistol slide animation (fast back & forward) */
+  if (currentGun === "pistol") {
+    slide.style.transform = "translateX(-14px)";
+    setTimeout(()=>{
+      slide.style.transform = "translateX(0)";
+    }, 60);
+  }
+}
+</script>
+<!-- RECOIL + AUTO-RELOAD + BOT CHAT -->
+<style>
+#chatBox{
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:220px;
+  max-height:200px;
+  background:rgba(0,0,0,.6);
+  color:#0f0;
+  font-family:monospace;
+  font-size:12px;
+  padding:6px;
+  overflow-y:auto;
+  border-radius:6px;
+}
+.shake{
+  animation:shake .12s linear;
+}
+@keyframes shake{
+  0%{transform:translate(0,0)}
+  25%{transform:translate(-4px,3px)}
+  50%{transform:translate(3px,-3px)}
+  75%{transform:translate(-3px,2px)}
+  100%{transform:translate(0,0)}
+}
+</style>
+
+<div id="chatBox"></div>
+
+<script>
+/* ===== RECOIL + AUTO RELOAD ===== */
+
+let reloading = false;
+const maxAmmo = {
+  pistol: 12,
+  smg: 30,
+  shotgun: 6
+};
+
+const fpsScreen = document.getElementById("fps");
+
+const originalShoot = shoot;
+shoot = function(){
+  if (reloading) return;
+
+  originalShoot();
+
+  // recoil + screen shake
+  fpsScreen.classList.add("shake");
+  setTimeout(()=>fpsScreen.classList.remove("shake"),120);
+
+  // auto reload
+  if (guns[currentGun].ammo <= 0){
+    reloadGun();
+  }
+};
+
+function reloadGun(){
+  reloading = true;
+  hud.textContent = "Reloading...";
+  setTimeout(()=>{
+    guns[currentGun].ammo = maxAmmo[currentGun];
+    reloading = false;
+    updateHUD();
+  }, currentGun === "shotgun" ? 1200 : 800);
+}
+
+/* ===== FAKE BOT CHAT ===== */
+
+const chat = document.getElementById("chatBox");
+const botNames = ["Ghost","Nova","Rex","Viper","Echo","Blaze"];
+const botLines = [
+  "enemy spotted",
+  "reloading",
+  "cover me",
+  "nice shot",
+  "push mid",
+  "lol",
+  "gg"
+];
+
+function botMessage(){
+  const name = botNames[Math.floor(Math.random()*botNames.length)];
+  const text = botLines[Math.floor(Math.random()*botLines.length)];
+  const line = document.createElement("div");
+  line.textContent = name + ": " + text;
+  chat.appendChild(line);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+setInterval(botMessage, 2500 + Math.random()*2000);
+</script>
+<script>
+/* ===== INFINITE KILL STREAK EXTENSION ===== */
+
+const adjectives = [
+  "UNHINGED",
+  "FERAL",
+  "DIABOLICAL",
+  "UNEMPLOYED",
+  "ASCENDED",
+  "ILLEGAL",
+  "MYTHICAL",
+  "COSMIC",
+  "GOD FORSAKEN",
+  "PHYSICS-DEFYING",
+  "CRIMINALLY INSANE"
+];
+
+const verbs = [
+  "COOKING",
+  "FARMING",
+  "SPEEDRUNNING LIFE",
+  "BREAKING REALITY",
+  "COMMITTING WAR CRIMES",
+  "BULLYING THE LOBBY",
+  "DELETEING TIMELINES",
+  "SOFTLOCKING THE GAME"
+];
+
+const nouns = [
+  "NPCs",
+  "THE LOBBY",
+  "THE SERVERS",
+  "REALITY",
+  "TIME ITSELF",
+  "PHYSICS",
+  "THE MATRIX",
+  "HUMAN RIGHTS"
+];
+
+const milestoneMessages = {
+  10: "OKAY RELAX 😭",
+  50: "THEY HAVE FAMILIES",
+  100: "BRO GO OUTSIDE",
+  500: "THIS IS NOT A FLEX ANYMORE",
+  1000: "THE GAME IS AFRAID OF YOU",
+  5000: "THE SERVERS ARE SWEATING",
+  10000: "TIME HAS LOST MEANING",
+  50000: "YOU HAVE BECOME A BUG",
+  100000: "THE GAME ACCEPTS DEFEAT"
+};
+
+function getRidiculousLine(streak){
+  if (milestoneMessages[streak]) {
+    return milestoneMessages[streak];
+  }
+
+  if (streak > 100000) {
+    return "REALITY HAS STOPPED TRYING";
+  }
+
+  const adj = adjectives[Math.floor(Math.random()*adjectives.length)];
+  const verb = verbs[Math.floor(Math.random()*verbs.length)];
+  const noun = nouns[Math.floor(Math.random()*nouns.length)];
+
+  if (streak > 10000) {
+    return `${adj} ENTITY ${verb} ${noun}`;
+  }
+
+  if (streak > 1000) {
+    return `${adj} PLAYER IS ${verb}`;
+  }
+
+  if (streak > 100) {
+    return `${verb} ${noun}`;
+  }
+
+  return `Kill Streak x${streak}`;
+}
+
+/* Override message logic safely */
+const oldRegisterKill = registerKill;
+registerKill = function(){
+  killStreak++;
+  clearTimeout(streakTimeout);
+
+  const line = getRidiculousLine(killStreak);
+
+  streakEl.textContent = line;
+  streakEl.classList.add("show");
+
+  streakTimeout = setTimeout(()=>{
+    streakEl.classList.remove("show");
+  }, 900);
+};
+</script>
+<!-- ENEMY BOTS SYSTEM -->
+<style>
+.bot {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  background: crimson;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(255,0,0,.6);
+}
+.botHealth {
+  position:absolute;
+  top:-6px;
+  left:0;
+  height:4px;
+  background:lime;
+}
+.bullet {
+  position:fixed;
+  width:6px;
+  height:6px;
+  background:yellow;
+  border-radius:50%;
+}
+</style>
+
+<script>
+/* ===== BOT CONFIG ===== */
+const bots = [];
+const maxBots = 5;
+const botSpeed = 0.4;
+const botDamage = 5;
+
+/* PLAYER */
+let playerHealth = 100;
+
+/* SPAWN BOT */
+function spawnBot(){
+  const bot = document.createElement("div");
+  bot.className = "bot";
+
+  const hpBar = document.createElement("div");
+  hpBar.className = "botHealth";
+  bot.appendChild(hpBar);
+
+  bot.x = Math.random() * (innerWidth - 40);
+  bot.y = Math.random() * (innerHeight - 40);
+  bot.hp = 100;
+
+  bot.style.left = bot.x + "px";
+  bot.style.top = bot.y + "px";
+
+  document.body.appendChild(bot);
+  bots.push(bot);
+}
+
+/* INITIAL SPAWN */
+while (bots.length < maxBots) spawnBot();
+
+/* BOT AI LOOP */
+setInterval(()=>{
+  bots.forEach(bot=>{
+    if (!bot.isConnected) return;
+
+    // move randomly
+    bot.x += (Math.random() - 0.5) * 6;
+    bot.y += (Math.random() - 0.5) * 6;
+
+    bot.x = Math.max(0, Math.min(innerWidth-40, bot.x));
+    bot.y = Math.max(0, Math.min(innerHeight-40, bot.y));
+
+    bot.style.left = bot.x + "px";
+    bot.style.top = bot.y + "px";
+
+    // shoot at player randomly
+    if (Math.random() < 0.02) botShoot(bot);
+  });
+}, 60);
+
+/* BOT SHOOT */
+function botShoot(bot){
+  const bullet = document.createElement("div");
+  bullet.className = "bullet";
+
+  let x = bot.x + 20;
+  let y = bot.y + 20;
+
+  document.body.appendChild(bullet);
+
+  const interval = setInterval(()=>{
+    x += (innerWidth/2 - x) * 0.05;
+    y += (innerHeight/2 - y) * 0.05;
+
+    bullet.style.left = x + "px";
+    bullet.style.top = y + "px";
+
+    if (Math.abs(x-innerWidth/2) < 20 && Math.abs(y-innerHeight/2) < 20){
+      playerHealth -= botDamage;
+      clearInterval(interval);
+      bullet.remove();
+      hud.textContent = "HP: " + playerHealth;
+    }
+
+    if (x < 0 || y < 0 || x > innerWidth || y > innerHeight){
+      clearInterval(interval);
+      bullet.remove();
+    }
+  }, 30);
+}
+
+/* PLAYER HIT BOT */
+const oldShoot = shoot;
+shoot = function(){
+  oldShoot();
+
+  bots.forEach(bot=>{
+    const bx = bot.x + 20;
+    const by = bot.y + 20;
+
+    if (
+      Math.abs(bx - innerWidth/2) < 30 &&
+      Math.abs(by - innerHeight/2) < 30
+    ){
+      bot.hp -= guns[currentGun].damage;
+      bot.firstChild.style.width = bot.hp + "%";
+
+      if (bot.hp <= 0){
+        bot.remove();
+        bots.splice(bots.indexOf(bot),1);
+        registerKill();
+        setTimeout(spawnBot, 1000);
+      }
+    }
+  });
+};
+</script>
+<!-- SMOOTH FAKE 3D RENDERER -->
+<canvas id="ray3d"></canvas>
+
+<script>
+/* ===== SMOOTH FAKE 3D (RAYCASTING) ===== */
+
+const canvas3d = document.getElementById("ray3d");
+const ctx3d = canvas3d.getContext("2d");
+canvas3d.style.position = "fixed";
+canvas3d.style.inset = 0;
+canvas3d.style.zIndex = 1;
+
+function resize3D(){
+  canvas3d.width = innerWidth * devicePixelRatio;
+  canvas3d.height = innerHeight * devicePixelRatio;
+  canvas3d.style.width = innerWidth + "px";
+  canvas3d.style.height = innerHeight + "px";
+  ctx3d.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener("resize", resize3D);
+resize3D();
+
+/* SIMPLE MAP (1 = wall, 0 = empty) */
+const map = [
+  [1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,1],
+  [1,0,0,1,0,0,0,1],
+  [1,0,0,1,0,0,0,1],
+  [1,0,0,0,0,1,0,1],
+  [1,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1],
+];
+
+let player = {
+  x: 3.5,
+  y: 3.5,
+  angle: 0,
+  fov: Math.PI / 3
+};
+
+/* LOOK CONTROLS */
+addEventListener("mousemove", e=>{
+  player.angle += e.movementX * 0.002;
+});
+addEventListener("touchmove", e=>{
+  player.angle += e.touches[0].clientX * 0.0005;
+});
+
+/* RAYCAST */
+function castRay(angle){
+  let x = player.x;
+  let y = player.y;
+  let sin = Math.sin(angle);
+  let cos = Math.cos(angle);
+
+  for (let i=0; i<20; i+=0.02){
+    let rx = x + cos * i;
+    let ry = y + sin * i;
+    if (map[Math.floor(ry)]?.[Math.floor(rx)]) {
+      return i;
+    }
+  }
+  return 20;
+}
+
+/* RENDER LOOP */
+function render3D(){
+  ctx3d.clearRect(0,0,canvas3d.width,canvas3d.height);
+
+  // sky
+  ctx3d.fillStyle = "#202a44";
+  ctx3d.fillRect(0,0,canvas3d.width,canvas3d.height/2);
+
+  // ground
+  ctx3d.fillStyle = "#2b2b2b";
+  ctx3d.fillRect(0,canvas3d.height/2,canvas3d.width,canvas3d.height/2);
+
+  const rays = canvas3d.width / 4;
+
+  for (let i=0;i<rays;i++){
+    let angle = player.angle - player.fov/2 + (i/rays)*player.fov;
+    let dist = castRay(angle);
+    let corrected = dist * Math.cos(angle - player.angle);
+    let wallHeight = canvas3d.height / corrected;
+
+    // smooth shading
+    let shade = Math.max(0, 220 - corrected*30);
+    ctx3d.fillStyle = `rgb(${shade},${shade},${shade})`;
+
+    ctx3d.fillRect(
+      i*(canvas3d.width/rays),
+      (canvas3d.height-wallHeight)/2,
+      (canvas3d.width/rays)+1,
+      wallHeight
+    );
+  }
+
+  requestAnimationFrame(render3D);
+}
+
+render3D();
+</script>
+<script>
+/* ===== BULLET HOLES (NON-BOT HITS) ===== */
+
+const bulletHoles = [];
+
+/* store bullet hole */
+function addBulletHole(x, y, size = 6){
+  bulletHoles.push({
+    x,
+    y,
+    size,
+    life: 1
+  });
+}
+
+/* draw bullet holes */
+function drawBulletHoles(){
+  bulletHoles.forEach(hole=>{
+    ctx3d.save();
+    ctx3d.globalAlpha = hole.life;
+    ctx3d.fillStyle = "#111";
+    ctx3d.beginPath();
+    ctx3d.arc(hole.x, hole.y, hole.size, 0, Math.PI*2);
+    ctx3d.fill();
+
+    /* metal scratch */
+    ctx3d.strokeStyle = "#555";
+    ctx3d.lineWidth = 1;
+    ctx3d.beginPath();
+    ctx3d.arc(hole.x, hole.y, hole.size+1.5, 0, Math.PI*2);
+    ctx3d.stroke();
+    ctx3d.restore();
+
+    hole.life -= 0.002;
+  });
+
+  /* cleanup */
+  for(let i=bulletHoles.length-1;i>=0;i--){
+    if (bulletHoles[i].life <= 0) bulletHoles.splice(i,1);
+  }
+}
+
+/* hook into 3D render loop */
+const oldRender3D = render3D;
+render3D = function(){
+  oldRender3D();
+  drawBulletHoles();
+};
+
+/* detect wall hit when shooting */
+const oldShootWall = shoot;
+shoot = function(){
+  oldShootWall();
+
+  /* raycast straight ahead */
+  let hitDist = castRay(player.angle);
+
+  /* if hit is close enough, treat as wall hit */
+  if (hitDist < 6){
+    const screenX = canvas3d.width / 2;
+    const screenY = canvas3d.height / 2;
+
+    /* slight random offset so holes don't stack perfectly */
+    addBulletHole(
+      screenX + (Math.random()-0.5)*10,
+      screenY + (Math.random()-0.5)*10,
+      5 + Math.random()*2
+    );
+  }
+};
+</script>
+  <!-- BACKWARDS GUN -->
+<style>
+#backwardsGun {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  width:180px;
+  height:90px;
+  margin-left:-90px;
+  display:none;
+  pointer-events:none;
+}
+#bgHandle {
+  position:absolute;
+  right:20px;
+  bottom:0;
+  width:30px;
+  height:60px;
+  background:#222;
+  border-radius:6px;
+}
+#bgBarrel {
+  position:absolute;
+  right:20px; /* reversed */
+  top:15px;
+  width:120px;
+  height:20px;
+  background:#444;
+  border-radius:4px;
+}
+</style>
+
+<div id="backwardsGun">
+  <div id="bgBarrel"></div>
+  <div id="bgHandle"></div>
+</div>
+
+<script>
+/* ===== BACKWARDS GUN LOGIC ===== */
+
+let backwardsGunUnlocked = false;
+let usingBackwardsGun = false;
+
+const bgGun = document.getElementById("backwardsGun");
+
+/* unlock at 10 kills */
+const oldRegisterKill_BG = registerKill;
+registerKill = function(){
+  oldRegisterKill_BG();
+
+  if (killStreak >= 10 && !backwardsGunUnlocked){
+    backwardsGunUnlocked = true;
+    usingBackwardsGun = true;
+    bgGun.style.display = "block";
+
+    streakEl.textContent = "WHY IS THE BARREL LIKE THAT";
+    streakEl.classList.add("show");
+    setTimeout(()=>streakEl.classList.remove("show"),1200);
+  }
+};
+
+/* hook into shooting */
+const oldShoot_BG = shoot;
+shoot = function(){
+  if (usingBackwardsGun){
+    // backfire damage
+    playerHealth -= 25;
+    if (playerHealth < 0) playerHealth = 0;
+    hud.textContent = "HP: " + playerHealth;
+
+    // visual recoil
+    bgGun.style.transform = "translateY(8px)";
+    setTimeout(()=>bgGun.style.transform="translateY(0)",80);
+
+    streakEl.textContent = "IT HIT YOU 😭";
+    streakEl.classList.add("show");
+    setTimeout(()=>streakEl.classList.remove("show"),700);
+
+    // if player health hits 0, disable gun
+    if (playerHealth === 0){
+      usingBackwardsGun = false;
+      bgGun.style.display = "none";
+      resetKillStreak();
+    }
+    return;
+  }
+
+  oldShoot_BG();
+};
+</script>
+<!-- WEAPON SHOP -->
+<style>
+#shopBtn{
+  position:fixed;
+  top:60px;
+  left:10px;
+  padding:8px 10px;
+  background:#222;
+  color:#fff;
+  border:1px solid #555;
+  border-radius:6px;
+  z-index:9999;
+}
+#shop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  color:white;
+  font-family:system-ui, sans-serif;
+  display:none;
+  z-index:10000;
+}
+#shopContent{
+  max-width:360px;
+  margin:60px auto;
+  background:#111;
+  padding:12px;
+  border-radius:10px;
+}
+.shopItem{
+  border:1px solid #333;
+  padding:10px;
+  margin-bottom:8px;
+  border-radius:6px;
+}
+.shopItem button{
+  margin-top:6px;
+  width:100%;
+}
+</style>
+
+<button id="shopBtn">SHOP</button>
+
+<div id="shop">
+  <div id="shopContent">
+    <h3>Weapon Shop</h3>
+    <div id="shopItems"></div>
+    <button onclick="closeShop()">Close</button>
+  </div>
+</div>
+
+<script>
+/* ===== SHOP DATA ===== */
+
+const shopWeapons = [
+  {
+    id:"m1911",
+    name:"M1911",
+    cost:5,
+    stats:{ damage:30, rate:450, ammo:8 }
+  },
+  {
+    id:"ak",
+    name:"AK-Style Rifle",
+    cost:15,
+    stats:{ damage:20, rate:120, ammo:30 }
+  },
+  {
+    id:"mp5",
+    name:"MP5-Style SMG",
+    cost:12,
+    stats:{ damage:12, rate:80, ammo:30 }
+  },
+  {
+    id:"pump",
+    name:"Pump Shotgun",
+    cost:18,
+    stats:{ damage:70, rate:900, ammo:5 }
+  }
+];
+
+const ownedWeapons = new Set();
+
+/* UI */
+const shop = document.getElementById("shop");
+const shopItems = document.getElementById("shopItems");
+document.getElementById("shopBtn").onclick = ()=>shop.style.display="block";
+function closeShop(){ shop.style.display="none"; }
+
+/* render shop */
+function renderShop(){
+  shopItems.innerHTML = "";
+  shopWeapons.forEach(w=>{
+    const div = document.createElement("div");
+    div.className = "shopItem";
+
+    const owned = ownedWeapons.has(w.id);
+
+    div.innerHTML = `
+      <strong>${w.name}</strong><br>
+      Cost: ${w.cost} kills<br>
+      ${owned ? "OWNED" : ""}
+      <button ${owned ? "disabled" : ""}>
+        ${owned ? "Owned" : "Buy"}
+      </button>
+    `;
+
+    div.querySelector("button").onclick = ()=>{
+      if (killStreak >= w.cost && !owned){
+        killStreak -= w.cost;
+        ownedWeapons.add(w.id);
+
+        guns[w.id] = {
+          damage: w.stats.damage,
+          rate: w.stats.rate,
+          ammo: w.stats.ammo
+        };
+
+        currentGun = w.id;
+        updateHUD();
+
+        streakEl.textContent = w.name + " UNLOCKED";
+        streakEl.classList.add("show");
+        setTimeout(()=>streakEl.classList.remove("show"),900);
+
+        renderShop();
+      }
+    };
+
+    shopItems.appendChild(div);
+  });
+}
+
+renderShop();
+</script>
+<!-- GAME NUKE ABILITY -->
+<style>
+#nukeBtn{
+  position:fixed;
+  top:110px;
+  left:10px;
+  padding:10px 12px;
+  background:#b00000;
+  color:white;
+  font-family:monospace;
+  border:2px solid #ff5555;
+  border-radius:6px;
+  display:none;
+  z-index:10001;
+}
+#nukeFlash{
+  position:fixed;
+  inset:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+  z-index:10000;
+}
+</style>
+
+<button id="nukeBtn">☢ NUKE (1 KILL)</button>
+<div id="nukeFlash"></div>
+
+<script>
+/* ===== GAME NUKE LOGIC ===== */
+
+const nukeBtn = document.getElementById("nukeBtn");
+const nukeFlash = document.getElementById("nukeFlash");
+let nukeUsed = false;
+
+/* show nuke button once you have 1 kill */
+const oldRegisterKill_NUKE = registerKill;
+registerKill = function(){
+  oldRegisterKill_NUKE();
+
+  if (killStreak >= 1 && !nukeUsed){
+    nukeBtn.style.display = "block";
+  }
+};
+
+/* activate nuke */
+nukeBtn.addEventListener("click", ()=>{
+  if (nukeUsed || killStreak < 1) return;
+
+  nukeUsed = true;
+  killStreak -= 1;
+  nukeBtn.style.display = "none";
+
+  // flash
+  nukeFlash.style.opacity = "1";
+  setTimeout(()=>nukeFlash.style.opacity = "0", 200);
+
+  // dramatic message
+  streakEl.textContent = "TACTICAL BAD DECISION INBOUND ☢";
+  streakEl.classList.add("show");
+  setTimeout(()=>streakEl.classList.remove("show"),1200);
+
+  // eliminate all bots
+  bots.forEach(bot=>{
+    if (bot.isConnected){
+      bot.remove();
+      registerKill();
+    }
+  });
+  bots.length = 0;
+
+  // respawn bots after delay
+  setTimeout(()=>{
+    while (bots.length < maxBots) spawnBot();
+  }, 2000);
+});
+</script>
+<!-- WHISPERED HALLUCINATION TEXT -->
+<style>
+.whisper {
+  position: fixed;
+  color: rgba(255,255,255,0.35);
+  font-family: serif;
+  font-size: 18px;
+  font-style: italic;
+  pointer-events: none;
+  opacity: 0;
+  animation: whisperFade 3.5s ease-in-out forwards;
+  z-index: 9999;
+}
+
+@keyframes whisperFade {
+  0%   { opacity: 0; transform: translateY(4px); }
+  20%  { opacity: 0.6; }
+  80%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+</style>
+
+<script>
+/* ===== WHISPER SYSTEM ===== */
+
+const whisperLines = [
+  "trust them",
+  "they're friendly",
+  "don't shoot",
+  "it's okay",
+  "they won't hurt you",
+  "lower your weapon"
+];
+
+let whisperInterval = null;
+
+/* start whispers */
+function startWhispers(){
+  if (whisperInterval) return;
+
+  whisperInterval = setInterval(()=>{
+    if (!hallucinating) return;
+
+    const w = document.createElement("div");
+    w.className = "whisper";
+    w.textContent =
+      whisperLines[Math.floor(Math.random()*whisperLines.length)];
+
+    // random screen edge placement
+    const side = Math.floor(Math.random()*4);
+    const padding = 20;
+
+    if (side === 0) { // left
+      w.style.left = padding + "px";
+      w.style.top = Math.random() * innerHeight + "px";
+    }
+    if (side === 1) { // right
+      w.style.right = padding + "px";
+      w.style.top = Math.random() * innerHeight + "px";
+    }
+    if (side === 2) { // top
+      w.style.top = padding + "px";
+      w.style.left = Math.random() * innerWidth + "px";
+    }
+    if (side === 3) { // bottom
+      w.style.bottom = padding + "px";
+      w.style.left = Math.random() * innerWidth + "px";
+    }
+
+    document.body.appendChild(w);
+
+    setTimeout(()=>w.remove(), 3500);
+  }, 2200 + Math.random()*1500);
+}
+
+/* stop whispers */
+function stopWhispers(){
+  clearInterval(whisperInterval);
+  whisperInterval = null;
+}
+
+/* hook into potion lifecycle */
+const oldDrinkPotion = drinkPotion;
+drinkPotion = function(){
+  oldDrinkPotion();
+  startWhispers();
+};
+
+/* stop when hallucination ends */
+const oldEndPotionCheck = setTimeout;
+setTimeout(()=>{
+  if (!hallucinating) stopWhispers();
+}, 0);
+</script>
 </body>
 </html>
-</html>
+
