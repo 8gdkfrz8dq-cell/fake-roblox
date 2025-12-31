@@ -228,64 +228,7 @@ function render(){
   robux.textContent=r;
 }
 
-function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
-function playGame(i){
-  // pick a random game
-  const game = data.games[rand(0, data.games.length - 1)];
 
-  // fake loading screen
-  const overlay = document.createElement("div");
-  overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.background = "#111";
-  overlay.style.color = "#fff";
-  overlay.style.display = "flex";
-  overlay.style.alignItems = "center";
-  overlay.style.justifyContent = "center";
-  overlay.style.fontSize = "22px";
-  overlay.innerText = "Joining server...";
-  document.body.appendChild(overlay);
-
-  // change text after a delay
-  setTimeout(()=>{
-    overlay.innerText = "Loading assets...";
-  }, 1200);
-
-  setTimeout(()=>{
-    overlay.innerText = "Playing: " + game.name;
-  }, 2400);
-
-  // fake "game screen"
-  setTimeout(()=>{
-    let score = 0;
-
-overlay.innerHTML = `
-  <div style="text-align:center">
-    <h2>${game.name}</h2>
-    <p>Tap the button to score</p>
-    <h3 id="score">Score: 0</h3>
-
-    <button id="tapBtn" style="padding:16px 24px;font-size:18px;margin:10px;">
-      TAP 🎯
-    </button>
-
-    <br>
-
-    <button onclick="location.reload()" style="padding:10px 16px;font-size:16px;">
-      Back to Dashboard
-    </button>
-  </div>
-`;
-
-document.getElementById("tapBtn").onclick = () => {
-  score++;
-  document.getElementById("score").innerText = "Score: " + score;
-};
-  }, 3600);
-}
 start();
 </script>
 <script>
