@@ -1432,6 +1432,267 @@ setTimeout(()=>{
   if (!hallucinating) stopWhispers();
 }, 0);
 </script>
+<!-- BACKWARDS GUN -->
+<style>
+#backwardsGun{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  width:180px;
+  height:90px;
+  margin-left:-90px;
+  display:none;
+  pointer-events:none;
+}
+#bgHandle{
+  position:absolute;
+  right:20px;
+  bottom:0;
+  width:30px;
+  height:60px;
+  background:#222;
+  border-radius:6px;
+}
+#bgBarrel{
+  position:absolute;
+  right:20px;
+  top:15px;
+  width:120px;
+  height:20px;
+  background:#444;
+  border-radius:4px;
+}
+</style>
+
+<div id="backwardsGun">
+  <div id="bgBarrel"></div>
+  <div id="bgHandle"></div>
+</div>
+
+<script>
+let backwardsGunUnlocked=false;
+let usingBackwardsGun=false;
+const bgGun=document.getElementById("backwardsGun");
+
+const oldRegisterKill_BG=registerKill;
+registerKill=function(){
+  oldRegisterKill_BG();
+  if(killStreak>=10&&!backwardsGunUnlocked){
+    backwardsGunUnlocked=true;
+    usingBackwardsGun=true;
+    bgGun.style.display="block";
+    streakEl.textContent="WHY IS THE BARREL LIKE THAT";
+    streakEl.classList.add("show");
+    setTimeout(()=>streakEl.classList.remove("show"),1200);
+  }
+};
+
+const oldShoot_BG=shoot;
+shoot=function(){
+  if(usingBackwardsGun){
+    playerHealth-=25;
+    if(playerHealth<0)playerHealth=0;
+    hud.textContent="HP: "+playerHealth;
+    bgGun.style.transform="translateY(8px)";
+    setTimeout(()=>bgGun.style.transform="translateY(0)",80);
+    if(playerHealth===0){
+      usingBackwardsGun=false;
+      bgGun.style.display="none";
+      resetKillStreak();
+    }
+    return;
+  }
+  oldShoot_BG();
+};
+</script>
+<!-- WEAPON SHOP -->
+<style>
+#shopBtn{
+  position:fixed;
+  top:60px;
+  left:10px;
+  padding:8px 10px;
+  background:#222;
+  color:#fff;
+  border-radius:6px;
+  z-index:9999;
+}
+#shop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  color:white;
+  display:none;
+  z-index:10000;
+}
+#shopContent{
+  max-width:360px;
+  margin:60px auto;
+  background:#111;
+  padding:12px;
+  border-radius:10px;
+}
+.shopItem{border:1px solid #333;padding:10px;margin-bottom:8px;}
+</style>
+
+<button id="shopBtn">SHOP</button>
+
+<div id="shop">
+  <div id="shopContent">
+    <h3>Weapon Shop</h3>
+    <div id="shopItems"></div>
+    <button onclick="shop.style.display='none'">Close</button>
+  </div>
+</div>
+
+<script>
+const shopWeapons=[
+ {id:"m1911",name:"M1911",cost:5,stats:{damage:30,rate:450,ammo:8}},
+ {id:"ak",name:"AK-Style Rifle",cost:15,stats:{damage:20,rate:120,ammo:30}},
+ {id:"mp5",name:"MP5-Style SMG",cost:12,stats:{damage:12,rate:80,ammo:30}},
+ {id:"pump",name:"Pump Shotgun",cost:18,stats:{damage:70,rate:900,ammo:5}}
+];
+
+const ownedWeapons=new Set();
+const shop=document.getElementById("shop");
+const shopItems=document.getElementById("shopItems");
+document.getElementById("shopBtn").onclick=()=>shop.style.display="block";
+
+function renderShop(){
+  shopItems.innerHTML="";
+  shopWeapons.forEach(w=>{
+    const owned=ownedWeapons.has(w.id);
+    const d=document.createElement("div");
+    d.className="shopItem";
+    d.innerHTML=`
+      <b>${w.name}</b><br>
+      Cost: ${w.cost} kills<br>
+      <button ${owned?"disabled":""}>${owned?"Owned":"Buy"}</button>
+    `;
+    d.querySelector("button").onclick=()=>{
+      if(killStreak>=w.cost&&!owned){
+        killStreak-=w.cost;
+        ownedWeapons.add(w.id);
+        guns[w.id]=w.stats;
+        currentGun=w.id;
+        updateHUD();
+        renderShop();
+      }
+    };
+    shopItems.appendChild(d);
+  });
+}
+renderShop();
+</script>
+<!-- FAKE 3D CAMERA -->
+<style>
+#world {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  perspective: 800px;
+}
+.bot {
+  position: absolute;
+  width: 40px;
+  height: 60px;
+  background: crimson;
+  border-radius: 6px;
+  transform-origin: center;
+  transition: transform 0.1s linear;
+}
+</style>
+
+<script>
+/* ===== FAKE 3D CORE ===== */
+
+const world = document.createElement("div");
+world.id = "world";
+document.body.appendChild(world);
+
+// override bot spawn to include depth (z)
+const oldSpawnBot_F3D = spawnBot;
+spawnBot = function(){
+  const bot = document.createElement("div");
+  bot.className = "bot";
+
+  bot.x = Math.random()*innerWidth;
+  bot.z = Math.random()*800 + 200; // depth
+
+  world.appendChild(bot);
+  bots.push(bot);
+};
+
+/* render fake depth */
+function renderFake3D(){
+  bots.forEach(bot=>{
+    if(!bot.parentNode) return;
+
+    // bring bots closer slowly
+    bot.z -= 1.5;
+    if(bot.z < 60){
+      bot.z = Math.random()*800 + 400;
+      bot.x = Math.random()*innerWidth;
+    }
+
+    // scale based on depth
+    const scale = Math.max(0.15, 1 - bot.z / 1000);
+    const screenX = bot.x - (scale * 20);
+
+    bot.style.transform =
+      `translate(${screenX}px, ${innerHeight/2}px)
+       scale(${scale})`;
+  });
+
+  requestAnimationFrame(renderFake3D);
+}
+
+renderFake3D();
+</script>
+<script>
+/* ===== FAKE 3D SHOOTING ===== */
+
+const oldShoot_F3D = shoot;
+shoot = function(){
+  let hit = null;
+
+  bots.forEach(bot=>{
+    if(!bot.parentNode) return;
+
+    const scale = Math.max(0.15, 1 - bot.z / 1000);
+    const bx = bot.x;
+    const cx = innerWidth/2;
+
+    if (Math.abs(bx - cx) < 30 && bot.z < 400){
+      hit = bot;
+    }
+  });
+
+  if(hit){
+    hit.remove();
+    registerKill();
+    return;
+  }
+
+  oldShoot_F3D();
+};
+</script>
+
+  <style>
+.bot {
+  filter: brightness(1);
+}
+</style>
+
+<script>
+setInterval(()=>{
+  bots.forEach(bot=>{
+    if(!bot.parentNode) return;
+    const fog = Math.max(0.3, 1 - bot.z/1000);
+    bot.style.filter = `brightness(${fog})`;
+  });
+}, 100);
+</script>
 </body>
 </html>
 
