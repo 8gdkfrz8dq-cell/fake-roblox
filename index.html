@@ -303,9 +303,8 @@ if ("serviceWorker" in navigator) {
 
   
 <script>
-let chance = Math.random();
 
-if (chance < 0.6) {
+
   console.log("FPS game loaded");
 } else {
   console.log("Normal game loaded");
@@ -313,9 +312,9 @@ if (chance < 0.6) {
 </script>
 <!-- FPS / RPG chance system (ADDED, not replacing) -->
 <script>
-  const chance = Math.random();
 
-  if (chance < 0.6) {
+
+  
     console.log("FPS / RPG mode selected");
     document.body.insertAdjacentHTML(
       "beforeend",
